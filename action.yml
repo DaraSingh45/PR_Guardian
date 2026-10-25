@@ -1,0 +1,67 @@
+name: "PR Guardian"
+description: "AI-assisted, security-aware pull request review: Semgrep static analysis + an LLM (Gemini or Groq), posted as inline comments with suggested fixes."
+author: "Dara Singh"
+branding:
+  icon: "shield"
+  color: "blue"
+
+inputs:
+  llm-provider:
+    description: "LLM provider to use: 'gemini' or 'groq'."
+    required: false
+    default: "gemini"
+  api-key:
+    description: "API key for the chosen provider. Store it as a repository secret (e.g. GEMINI_API_KEY or GROQ_API_KEY)."
+    required: true
+  model:
+    description: "Model ID. Leave empty to use the provider default (gemini: gemini-3.5-flash-lite, groq: openai/gpt-oss-120b)."
+    required: false
+    default: ""
+  github-token:
+    description: "Token used to read the PR and post comments. Needs pull-requests: write."
+    required: false
+    default: ${{ github.token }}
+  enable-semgrep:
+    description: "Run Semgrep Community Edition on changed files and feed its findings into the review."
+    required: false
+    default: "true"
+  semgrep-config:
+    description: "Semgrep rule config (e.g. 'p/default', 'p/owasp-top-ten', 'p/secrets', or a path to rules in your repo). Comma-separated for several."
+    required: false
+    default: "p/default"
+  suggestions:
+    description: "Include one-click 'suggested change' code fixes in comments when the fix is small and safe."
+    required: false
+    default: "true"
+  min-severity:
+    description: "Lowest severity to post: low, medium, high or critical."
+    required: false
+    default: "low"
+  max-comments:
+    description: "Maximum number of inline comments per run."
+    required: false
+    default: "15"
+  max-files:
+    description: "Maximum number of changed files to review per run."
+    required: false
+    default: "30"
+  ignore-paths:
+    description: "Comma-separated glob patterns to skip (lockfiles, build output and minified files are always skipped)."
+    required: false
+    default: ""
+  max-chars-per-request:
+    description: "Approximate size of diff text sent to the LLM in one request. Larger PRs are split into several requests."
+    required: false
+    default: "24000"
+
+outputs:
+  comments-posted:
+    description: "Number of new inline comments posted."
+  findings-total:
+    description: "Total findings after validation (before the max-comments cap)."
+  highest-severity:
+    description: "Highest severity found: none, low, medium, high or critical."
+
+runs:
+  using: "node24"
+  main: "dist/index.js"

@@ -1,0 +1,37 @@
+# Copy this file to .github/workflows/pr-guardian.yml in any repository you want reviewed.
+name: PR Guardian
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+
+# Least privilege: read the code, write review comments, nothing else.
+permissions:
+  contents: read
+  pull-requests: write
+
+# Cancel an in-progress review when a newer commit is pushed.
+concurrency:
+  group: pr-guardian-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  review:
+    if: github.event.pull_request.draft == false
+    runs-on: ubuntu-latest
+    steps:
+      # Check out the PR head so Semgrep's line numbers match the diff.
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+
+      - uses: DaraSingh45/PR_Guardian@v1
+        with:
+          llm-provider: gemini                       # or: groq
+          api-key: ${{ secrets.GEMINI_API_KEY }}     # or: ${{ secrets.GROQ_API_KEY }}
+          # model: gemini-3.5-flash                  # optional override
+          # semgrep-config: p/default,p/secrets      # optional
+          # min-severity: medium                     # optional
+          # max-comments: 10                         # optional
+          # suggestions: true                        # one-click fixes (default on)
